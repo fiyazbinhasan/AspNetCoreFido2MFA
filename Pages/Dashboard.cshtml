@@ -1,0 +1,66 @@
+﻿@page "/Dashboard/{username?}"
+@using Fido2NetLib
+@model DashboardModel
+@inject IMetadataService Mds
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="section">
+    <div class="container">
+        <h1 class="title is-1">Dashboard for: @Model.User.Name</h1>
+
+        <p>This page shows all registered keys on this username. Please note that keys are only persisted in memory on the dev server.</p>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>Date</td>
+                    <td>Desc</td>
+                    <td>Counter</td>
+                    <td>AAGuid</td>
+                    <td>UserHandle</td>
+                    <td>UserId</td>
+                    <td>Attestation Type</td>
+                    <td>Public Key</td>
+                </tr>
+            </thead>
+            @foreach (var item in Model.ExistingCredentials)
+            {
+                var desc = "";
+                var icon = "";
+                var userHandle = System.Text.Encoding.UTF8.GetString(item.UserHandle);
+                var userId = System.Text.Encoding.UTF8.GetString(item.UserId);
+                var publicKey = System.Convert.ToBase64String(item.PublicKey);
+                try
+                {
+
+                    if (Mds != null)
+                    {
+                        var entry = await Mds.GetEntryAsync(item.AaGuid);
+                        desc = entry.MetadataStatement.Description.ToString();
+                        icon = entry.MetadataStatement.Icon.ToString();
+                    }
+
+                }
+                catch { }
+
+                <tr>
+                    <td>@item.RegDate</td>
+                    <td><img src="@icon" /> @desc</td>
+                    <td>@item.SignatureCounter</td>
+                    <td>@item.AaGuid</td>
+                    <td>@userHandle</td>
+                    <td>@userId</td>
+                    <td>@item.CredType</td>
+                    <td>
+                        <details>
+                            <summary>@publicKey.Substring(0, 10).Substring(0, 10)...</summary>
+                            @publicKey
+                        </details>
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+</div>
